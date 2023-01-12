@@ -63,7 +63,7 @@
 			<div class="row">
 				<div class="item-option-select">
 					<h6>Select Size</h6>
-					<select class="form-control" name="size">
+					<select class="form-control" name="size" required>
 						<option value="" disabled selected>Select</option>
 						{% for i in single_product.variation_set.sizes %}
 							<option value="{{i.variation_value | lower }}">{{i.variation_value | capfirst}}</option>

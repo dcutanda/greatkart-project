@@ -54,7 +54,7 @@ def register(request):
             to_email = email
             send_email = EmailMessage(mail_subject, message, to=[to_email])
             send_email.send()
-            # messages.success(request, 'Registration Successful')
+            # messages.success(request, 'Thank you for registering with us. We have sent you a verification email to your email address [abc@gmail.com]')
 
             # this is use to extract request.GET value of command and email to make condition in login template
             return redirect('/accounts/login/?command=verification&email=' + email)
@@ -117,11 +117,11 @@ def login(request):
 
             auth.login(request, user)
             messages.success(request, 'You are now logged in')
-            url = request.META.get('HTTP_REFERER') # to grab the previous url
+            url = request.META.get('HTTP_REFERER') # to grab the previous url /cart/checkout/
             try:
                 query = requests.utils.urlparse(url).query
                 #print('query -->' query) next=/cart/checkout/
-                params = dict(x.split('=') for x in query.split('&'))
+                params = dict(x.split('=') for x in query.split('&')) # splitting = to :
                 #print('params -->' params) {'next': '/cart/checkout/'}
                 if 'next' in params:
                     nextPage = params['next']

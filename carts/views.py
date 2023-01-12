@@ -47,6 +47,7 @@ def add_cart(request, product_id):
 
             is_cart_item_exists = CartItem.objects.filter(product=product, user=current_user).exists()
 
+            # If True this will execute
             if is_cart_item_exists:
                 cart_item = CartItem.objects.filter(product=product, user=current_user)
                 ex_var_list = []
@@ -75,9 +76,10 @@ def add_cart(request, product_id):
                     # print(type(item.variations))
                     if len(product_variation) > 0:
                         item.variations.clear()
-                        item.variations.add(*product_variation)
+                        item.variations.add(*product_variation) # adding method in ManyToManyField
                     item.save()
 
+            # If there is no existing in the cart item this will execute
             else:
                 cart_item = CartItem.objects.create(product=product, quantity=1, user=current_user)
                 if len(product_variation) > 0:
@@ -92,7 +94,7 @@ def add_cart(request, product_id):
 
     # If the user is not authenticated
     else:
-        product_variation = []
+        product_variation = [] # currently added variation
         if request.method == 'POST':
             for item in request.POST:
                 key = item

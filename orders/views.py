@@ -35,7 +35,7 @@ def payments(request):
 
     for item in cart_items:
         order_product = OrderProduct()
-        order_product.order_id = order.id
+        order_product.order_id = order.id   # you can only assign the foreignkey id or the object itself ex. order_id, order, id
         order_product.payment = payment
         order_product.user_id = request.user.id
         order_product.product_id = item.product.id
@@ -44,10 +44,10 @@ def payments(request):
         order_product.ordered = True
         order_product.save()
 
-        # Saving many to many fields
-        cart_item = CartItem.objects.get(id=item.id)
+        # Saving many to many fields, first save the object(order_product) then assign the value.
+        cart_item = CartItem.objects.get(id=item.id) # fetching individual item from the cart item
         product_variation = cart_item.variations.all()
-        order_product = OrderProduct.objects.get(id=order_product.id)
+        order_product = OrderProduct.objects.get(id=order_product.id) # get the newly saved ordered product
         order_product.variations.set(product_variation)
         order_product.save()
         # print(order_product.id)
@@ -127,7 +127,7 @@ def place_order(request, total=0, quantity=0):
             mt = int(datetime.date.today().strftime('%m'))
             d = datetime.date(yr, mt, dt)
             current_date = d.strftime("%Y%m%d")  # 20210814
-            order_number = current_date + str(data.id)
+            order_number = current_date + str(data.id) # Already saved the data so you can get the id of this current data.
             data.order_number = order_number
             data.save()
 
@@ -148,11 +148,13 @@ def place_order(request, total=0, quantity=0):
 
 
 def order_complete(request):
+
     order_number = request.GET.get('order_number')
     transID = request.GET.get('payment_id')
 
     order = Order.objects.get(order_number=order_number, is_ordered=True)
     ordered_products = OrderProduct.objects.filter(order_id=order.id)
+
 
     subtotal = 0
     for i in ordered_products:
@@ -173,3 +175,62 @@ def order_complete(request):
     }
 
     return render(request, 'orders/order_complete.html', context)
+
+def cash_delivery(request, order_number):
+    try:
+        order = Order.objects.get(user=request.user, is_ordered=False, order_number=order_number)
+
+        order.is_ordered = True
+        order.save()
+
+        cart_items = CartItem.objects.filter(user=request.user)
+
+        for item in cart_items:
+            order_product = OrderProduct()
+            order_product.order_id = order.id   # you can only assign the foreignkey id or the object itself ex. order_id, order, id
+            # order_product.payment = payment
+            order_product.user_id = request.user.id
+            order_product.product_id = item.product.id
+            order_product.quantity = item.quantity
+            order_product.product_price = item.product.price
+            order_product.ordered = True
+            order_product.save()
+
+            # Saving many to many fields, first save the object(order_product) then assign the value.
+            cart_item = CartItem.objects.get(id=item.id) # fetching individual item from the cart item
+            product_variation = cart_item.variations.all()
+            order_product = OrderProduct.objects.get(id=order_product.id) # get the newly saved ordered product
+            order_product.variations.set(product_variation)
+            order_product.save()
+            # print(order_product.id)
+            # print(order_product.product_id)
+
+            # Reduce the quantity of the sold products
+            product = Product.objects.get(id=item.product.id)
+            product.stock -= item.quantity
+            product.save()
+
+        # Clear Cart
+        # print(request.user)
+        CartItem.objects.filter(user=request.user).delete()
+        ordered_products = OrderProduct.objects.filter(order_id=order.id)
+
+
+        subtotal = 0
+        for i in ordered_products:
+            subtotal += i.product_price * i.quantity
+
+        context = {
+            'order': order,
+            'ordered_products': ordered_products,
+            "order_number": order.order_number,
+            # "transID": payment.payment_id,
+            # 'payment': payment,
+            'subtotal': subtotal,
+        }
+
+
+        return render(request, 'orders/order_complete.html', context)
+
+    except:
+        return redirect('cart')

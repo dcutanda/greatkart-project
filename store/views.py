@@ -12,13 +12,17 @@ from orders.models import OrderProduct
 
 
 # Create your views here.
-def store(request, category_slug=None):  # category_slug default is none to enable None or not None value
+def store(request, category_slug=None):  # category_slug default is none as default argument
     categories = None
     products = None
 
     if category_slug != None:
         categories = get_object_or_404(Category, slug=category_slug)
         products = Product.objects.all().filter(is_available=True, category=categories)
+
+        # Alternative but use try and except
+        # products = Product.objects.all().filter(is_available=True, category__slug=category_slug)
+
         paginator = Paginator(products, 4)
         page = request.GET.get('page')
         paged_products = paginator.get_page(page)

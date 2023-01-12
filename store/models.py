@@ -3,7 +3,7 @@ from category.models import Category
 from django.urls import reverse
 from accounts.models import Account
 from django.db.models import Avg, Count
-
+from django.template.defaultfilters import slugify
 
 # Create your models here.
 class Product(models.Model):
@@ -43,7 +43,12 @@ class Product(models.Model):
 
         return count
 
-# To seperate  color and size choices.
+    # This function will automatically update slug if you update product_name
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.product_name)
+        return super(Product, self).save(*args, **kwargs)
+
+# To modify the Queryset. To seperate  color and size choices.
 class VariationManager(models.Manager):
     def colors(self):
         return super(VariationManager, self).filter(variation_category='color', is_active=True)
@@ -51,7 +56,7 @@ class VariationManager(models.Manager):
     def sizes(self):
         return super(VariationManager, self).filter(variation_category='size', is_active=True)
 
-
+# dropdown list in admin panel
 variation_category_choice = (
     ('color', 'color'),
     ('size', 'size'),
